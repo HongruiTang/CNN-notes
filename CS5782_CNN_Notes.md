@@ -24,11 +24,12 @@ The CNN architecture is designed to gradually extract increasingly abstract and 
 3. **Fully Connected Layer**: Fully connected layers are exactly the same as how we used them in MLPs. Each neuron in the layer is connected to all the neurons in the previous layer. If we are using CNN in a classification task, the number of neurons in the last fully connected layer should be the same as the number of classes.
 
 The picture below shows a complete structure and essential components of CNN. Don’t be scared! We will go through each one of them and understand how they function individually as well as together to make up CNN.
-
+![CNN Architecture & Building Blocks Overview](cnn_archi.png)
 
 ## CNN Building Blocks
 
 After the short introduction above and motivations behind the design of CNN, let’s dive deep into the building blocks of the architecture to better understand how it excels at processing visual signals!
+![CNN Architecture](NETWORK.png)
 
 ### Convolutional Layer
 
@@ -40,10 +41,12 @@ The Conv layer is the core building block of CNNs and performs the majority of t
   - This is a great resource to see how convolution happens actively!
 
 - **Padding**: Padding ensures the output volume retains the same spatial dimensions as the input, especially when stride = 1. In the example shown below, the zero padding is simply adding rows and columns of zeros around the pixels to retain dimension. 
+![Padding](padding.png)
 
 - **Stride**: The stride defines how much the filter moves at each step. Larger strides reduce the spatial dimensions of the output, potentially losing finer details. In Figure 2, it shows how a filter of size 3*3 slides through the input slice with a stride = 1.
   1. Stride=1: Filter moves by 1 pixel at a time, leading to larger output volumes.
   2. Stride=2: Filter moves by 2 pixels, producing smaller output volumes.
+  ![Stride](stride.png)
 
 
 #### Dimension Calculation
@@ -62,6 +65,9 @@ The Conv layer is the core building block of CNNs and performs the majority of t
 - 1×1, 1D, 3D convolutions
 - Dilated convolutions
 
+### Demo
+Below we show a demo of how convolution happens. On the right, we have an input of size 32*32*3 for a RGB image and the first convolution layer. With a filter size of 5*5*3, the resulting activation map is of dimension 28*28*1. If we use 5 filters in total, then the resulting volume will be size of 28*28*5, where each filter’s activation maps are stacked together as shown on the far right. Note that each neuron in the convolutional layer is connected to a local spatial region of the input volume, but spans the entire depth (i.e., all color channels). In this example, there are 5 neurons along the depth dimension, each looking at the same region of the input. The lines connecting these 5 neurons do not indicate shared weights; instead, they show that the neurons are focused on the same receptive field. Although these neurons are looking at the same region, each is associated with a different filter, meaning they do not share weights. On the left, we provide a short example of calculation of the output volume. (The dimension of filters are only for demonstration purpose. They do not scale to the accurate size.)
+![Conv](conv.png)
 
 ### Pooling Layer
 
@@ -71,7 +77,7 @@ Pooling operates independently on every depth slice of the input. The operation 
 - Control overfitting by downsampling, which forces the model to focus on more prominent features rather than overfitting to small details.
 
 In the following example, we can see how a depth slice is downsampled from size 4*4 to a size of 2*2 by max pooling. Notice how only spatial dimension is reduced (256*256 -> 128*128) while the depth is maintained (64 -> 64). 
-
+![Pooling](pooling.png)
 
 ### Normalization Layer (often BatchNorm)
 
