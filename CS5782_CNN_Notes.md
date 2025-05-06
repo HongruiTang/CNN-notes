@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Convolutional Neural Networks (CNNs) are a type of Neural Network that is primarily designed for processing visual signals, such as image or video-related data [1] (not exclusively on images, for example, AlphaZero). The overall structure of CNN is similar to ordinary neural networks, but it has some special properties designed specifically for image processing. Before deep diving into the architecture of CNNs, let’s first recall what Multi-Layer Perceptron (MLP) is, what MLP can do and what the limitations of MLP are in the computer vision field. 
+Convolutional Neural Networks (CNNs) are a type of Neural Network that is primarily designed for processing visual signals, such as image or video-related data (not exclusively on images, for example, AlphaZero [1]). The overall structure of CNN is similar to ordinary neural networks, but it has some special properties designed specifically for image processing. Before deep diving into the architecture of CNNs, let’s first recall what Multi-Layer Perceptron (MLP) is, what MLP can do and what the limitations of MLP are in the computer vision field. 
 
 As we have seen in the previous chapters, MLP consists of several fully connected layers, where each neuron in one layer is connected to every neuron in the previous layer. The input is passed through several nonlinear hidden layers, and the output could be numerical in a regression task or class probability in a classification task. 
 
@@ -128,9 +128,11 @@ Batch Normalization (Batch Norm) [8] is a technique used in Convolutional Neural
 
 ### ReLU Layer (Activation Function)
 
-ReLU is a very widely used activation function to introduce non-linearities between layers. It is defined as 
+ReLU is a very widely used activation function to introduce non-linearities between layers. The goal of ReLU function is to outputs the input value if it's positive, and zero if it's negative. It is defined as 
 
 $$\text{ReLU}(x) = \max(0, x)$$
+
+![The ReLU activation function.](relu.png)
 
 As ReLU is essentially an element-wise max() function of threshold at zero, it is really cheap to compute and it’s also easy to compute the derivative in the backward propagation. 
 
@@ -155,15 +157,15 @@ It is intimidating to do backpropagation in CNN when you first see it because it
 
 ### Convolutional Layer Backprop
 
-In the forward path of the convolutional layer, we slide the filter over the input data and compute the dot product of the filter and the input (see previous section for more details). Formally, we can denote the loss function as $L$, input as $X$, filter as $F$, output as $O$, and the convolution function as $f(X, F) = O$. In this section, we assume stride is 1 for simplicity.  
+In the forward path of the convolutional layer, we slide the filter over the input data and compute the dot product of the filter and the input (see previous section for more details). Formally, we can denote the loss function as $L$, input as $X$, filter as $F$, output as $O$, and the convolution function as $f(X, F) = O$. *In this section, we assume the stride is 1 for simplicity.* 
 
 $$ O_{i,j} = \sum_{m=0}^{k-1} \sum_{n=0}^{k-1} F_{m,n} \cdot X_{i+m,\,j+n} $$
 
-In the backprop, we aim to find $dL/dF$ as $F$ has learnable parameters and we want to update the filter at each step. Similar to the backprop process in MLP, we need to have the gradient from the $l + 1$ layer and the gradient of the convolution function to compute the gradient of F at the $l $layer. By using chain rule, we have:
+In the backprop, we aim to find $\frac{dL}{dF}$ as $F$ has learnable parameters and we want to update the filter at each step. Similar to the backprop process in MLP, we need to have the gradient from the $l + 1$ layer and the gradient of the convolution function to compute the gradient of F at the $l$ layer. By using chain rule, we have:
 
 $$ \frac{dL}{dF} = \frac{dL}{dO} \cdot \frac{dO}{dF} $$
 
-As $dL/dO$ is given, we just need to calculate $\frac{dO_{i, j}}{dF_{p, q}}$. The only term in the sum that depends on $F_{p, q}$ is $F_{p, q} * X_{i + p, j + q}$. All other filter elements $F_{m, n}$ are multiplied with different parts of $X$, and are unaffected when computing the derivative with respect to $F_{p, q}$, so we can have the derivative of $O$ w.r.t $F$ is:
+As $\frac{dL}{dO}$ is given, we just need to calculate $\frac{dO_{i, j}}{dF_{p, q}}$. The only term in the sum that depends on $F_{p, q}$ is $F_{p, q} * X_{i + p, j + q}$. All other filter elements $F_{m, n}$ are multiplied with different parts of $X$, and are unaffected when computing the derivative with respect to $F_{p, q}$, so we can have the derivative of $O$ w.r.t $F$ is:
 
 $$ \frac{\partial O_{i, j}}{\partial F_{p, q}} = X_{i + p, j + q} $$
 
@@ -172,10 +174,10 @@ Therefore, by applying chain rule, we can compute how the loss L changes with re
 
 $$
 \frac{\partial L}{\partial F_{p,q}} = \sum_{i,j} \frac{\partial L}{\partial O_{i,j}} \cdot \frac{\partial O_{i,j}}{\partial F_{p,q}} 
-= \sum_{i,j} \delta_{i,j} \cdot X_{i+p,\,j+q}
+= \sum_{i,j} \frac{\partial L}{\partial O_{i,j}} \cdot X_{i+p,\,j+q}
 $$
 
-As deep CNN usually has more than one layer, we need to propagate the derivative through each layer using $dL/dX$. It is similar to how we compute $dL/dF$. Firstly, we use chain rule again to get $dL/dX$: 
+As deep CNN usually has more than one layer, we need to propagate the derivative through each layer using $\frac{dL}{dX}$. It is similar to how we compute $\frac{dL}{dF}$. Firstly, we use chain rule again to get $\frac{dL}{dX}$: 
 
 $$ \frac{dL}{dX} = \frac{dL}{dO} \cdot \frac{dO}{dX} $$
 
@@ -184,7 +186,7 @@ Since the convolution uses a sliding window, each pixel $X_{p, q}$ appears in mu
 
 $$ \frac{\partial L}{\partial X_{p,q}} = \sum_{i,j} \frac{\partial L}{\partial O_{i,j}} \cdot \frac{\partial O_{i,j}}{\partial X_{p,q}} $$
 
-Now we need to compute dO/dX for each X. For every $O_{i, j}$, $X_{p, q}$ appears in the output only if $(p, q) = (i + m, j+ n), where (m, n)$ is the index of the filter.
+Now we need to compute $\frac{dL}{dX}$ for each X. For every $O_{i, j}$, $X_{p, q}$ appears in the output only if $(p, q) = (i + m, j+ n), where (m, n)$ is the index of the filter.
 
 $$ \frac{\partial O_{i,j}}{\partial X_{p,q}} = F_{m,n} \quad \text{where} \quad m = p - i,\; n = q - j $$
 
@@ -192,7 +194,8 @@ Therefore, we can compute the gradient w.r.t input $X$ as:
 
 $$ \frac{\partial L}{\partial X_{p,q}} = \sum_{(i,j)\;\text{s.t.}\; X_{p,q} \in \text{patch}_{i,j}} \frac{\partial O_{i,j}}{\partial F_{p,q}} \cdot F_{p - i,\, q - j} $$
 
-**Example**:
+**Example**: 
+
 Let’s go through an example with an input of size $3\times3$, filter of size $2\times2$, and with stride = 1 and padding = 0.
 
 Figure 1 shows the forward pass and each tile in the output shows the result of applying the filter at the specific position. In the backprop, we are given $\frac{dL}{dO}$ and we aim to find $\frac{dL}{dF}$ and $\frac{dL}{dX}$ as shown in Figure.
@@ -203,7 +206,9 @@ Figure 1 shows the forward pass and each tile in the output shows the result of 
 
 
 Then we can apply this equation $\frac{\partial L}{\partial F_{p,q}} = \sum_{i,j} \frac{\partial L}{\partial O_{i,j}} \cdot \frac{\partial O_{i,j}}{\partial F_{p,q}} 
-= \sum_{i,j} \delta_{i,j} \cdot X_{i+p,\,j+q}$ to get the gradient for each $F_{p, q}$. For example, the gradient of $F_{1, 1}$ is obtained by $\frac{\partial L}{\partial F_{11}} = \frac{\partial L}{\partial O_{11}} \cdot \frac{\partial O_{11}}{\partial F_{11}} + \frac{\partial L}{\partial O_{12}} \cdot \frac{\partial O_{12}}{\partial F_{11}} + \frac{\partial L}{\partial O_{21}} \cdot \frac{\partial O_{21}}{\partial F_{11}} + \frac{\partial L}{\partial O_{22}} \cdot \frac{\partial O_{22}}{\partial F_{11}}$ and we can replace $O_{i, j}$ with $X_{i+p,\,j+q}$. Similarly, we can compute the remaining $\frac{\partial L}{\partial F}$ as below:
+= \sum_{i,j} \frac{\partial L}{\partial O_{i,j}} \cdot X_{i+p,\,j+q}$ to get the gradient for each $F_{p, q}$. 
+
+For example, the gradient of $F_{1, 1}$ is obtained by $\frac{\partial L}{\partial F_{11}} = \frac{\partial L}{\partial O_{11}} \cdot \frac{\partial O_{11}}{\partial F_{11}} + \frac{\partial L}{\partial O_{12}} \cdot \frac{\partial O_{12}}{\partial F_{11}} + \frac{\partial L}{\partial O_{21}} \cdot \frac{\partial O_{21}}{\partial F_{11}} + \frac{\partial L}{\partial O_{22}} \cdot \frac{\partial O_{22}}{\partial F_{11}}$ and we can replace $\frac{\partial O_{i, j}}{\partial F_{1, 1}}$ with $X_{i+p,\,j+q}$. Similarly, we can compute the remaining $\frac{\partial L}{\partial F}$ as below:
 
 $$\begin{aligned}
 \frac{\partial L}{\partial F_{11}} &= \frac{\partial L}{\partial O_{11}} \cdot X_{11} 
@@ -224,7 +229,7 @@ $$\begin{aligned}
 + \frac{\partial L}{\partial O_{22}} \cdot X_{33} 
 \end{aligned}$$
 
-This can also be written as $\frac{dL}{dF} = f(X, \frac{dL}{dO})$
+This can also be written as $\frac{dL}{dF} = f(X, \frac{dL}{dO})$, where $f$ is defined as the convolutional function previously.
 
 We can also breakdown the $\frac{dL}{dX}$ to $\frac{dL}{dX_{p, q}}$ for every $p, q \in {1,2,3}$.
 
@@ -249,7 +254,7 @@ This is equivalent as applying the convolution operation on the 180-degree rotat
 
 ### Pooling Layer Backprop
 
-In this section, we will focus on backpropagation in the max-pooling layer. Since max-pooling doesn’t have any weights, we don’t need to update the max-pooling layer and $dL/dX$ is all you need. By using chain rule, we have the equation for computing the derivative of $L$ w.r.t $X$ as:
+In this section, we will focus on backpropagation in the max-pooling layer. Since max-pooling doesn’t have any weights, we don’t need to update the max-pooling layer and $\frac{dL}{dX}$ is all you need. By using chain rule, we have the equation for computing the derivative of $L$ w.r.t $X$ as:
 
 $$ \frac{\partial L}{\partial X_{p,q}} = \sum_{i,j} \frac{\partial L}{\partial O_{i,j}} \cdot \frac{\partial O_{i,j}}{\partial X_{p,q}} $$
 
