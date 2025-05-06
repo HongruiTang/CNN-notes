@@ -38,7 +38,6 @@ The Conv layer is the core building block of CNNs and performs the majority of t
 #### Components:
 - **Kernel/Filter**: Filters are small spatially (in width and height), but extend through the full depth of the input volume. During the forward pass, the filter slides over the input data (convolution) and computes the dot product between the filter and the input at each position. The output is an activation map that represents the feature the filter detects (e.g., edges, colors, patterns).
   - **Example**: A first-layer filter might have a size of 5x5x3 (5 pixels wide and tall, with 3 corresponding to the 3 color channels in a RGB image).
-  - This is a great resource to see how convolution happens actively!
 
 - **Padding**: Padding ensures the output volume retains the same spatial dimensions as the input, especially when stride = 1. In the example shown below, the zero padding is simply adding rows and columns of zeros around the pixels to retain dimension. 
 ![Padding](padding.png)
@@ -51,7 +50,26 @@ The Conv layer is the core building block of CNNs and performs the majority of t
 
 #### Dimension Calculation
 
-> Spatial output size can be calculated based on input size, kernel size, padding, and stride.
+Spatial output size can be calculated based on input size, kernel size, padding, and stride.
+- **Input Volume:** Dimensions **$W_1 × H_1 × D_1$**
+
+- **Required Hyperparameters:**
+  - **$K$** – Number of filters  
+  - **$F$** – Filter size (spatial extent)  
+  - **$S$** – Stride  
+  - **$P$** – Zero-padding  
+
+- **Output Volume:** Dimensions **W₂ × H₂ × D₂**, calculated as:
+  - $W_2 = \left \lfloor{\frac{W_1 - F + 2P}{S}}\right \rfloor + 1$
+  - $H_2 = \left \lfloor{\frac{H_1 - F + 2P}{S}}\right \rfloor + 1$
+  - $D_2 = K$
+
+  _Note: Width and height are computed identically due to symmetry._
+
+- **Learnable Parameters (with weight sharing):**
+  - Each filter has $F \cdot F \cdot D_1$ weights
+  - Total parameters: $(F \cdot F \cdot D_1) \cdot K$ weights + **K biases**
+
 
 #### Characteristics
 
@@ -61,13 +79,21 @@ The Conv layer is the core building block of CNNs and performs the majority of t
 
 
 #### Types of Convolution
+There are some common types of convolutions that people use. 
 
-- 1×1, 1D, 3D convolutions
-- Dilated convolutions
+- **1×1 Conv**: The 1x1 convolution is used to reduce the number of channels (depth) without affecting spatial dimensions (width and height). It applies a filter of size 1x1 across all input channels to combine features across depth, typically for dimensionality reduction or feature compression.
+- **3x3 Conv**: The 3x3 convolution is a commonly used filter size that captures small spatial patterns like edges or textures. When two 3x3 conv layers are stacked, the receptive field of the second layer's output is a function of a 5x5 region in the input image. Therefore, two 3x3 conv layers, when stacked, can effectively capture the same information as a single 5x5 conv layer, yet with fewer parameters. 
+- **2D Conv**: A 2D convolution operates on two-dimensional spatial data (height and width). [Pytorch Conv2d](https://pytorch.org/docs/stable/generated/torch.nn.Conv2d.html)
+- **3D Conv**: A 3D convolution is used for volumetric data (height, width, and depth), typically used in tasks like video processing or medical imaging (e.g., MRI scans). It applies a filter over 3D inputs, capturing spatial and temporal (or depth) relationships. [Pytorch Conv3d](https://pytorch.org/docs/stable/generated/torch.nn.Conv3d.html)
+- **Dilated Conv**: Dilated convolutions [7] introduce gaps (or dilation) between the elements of the convolutional filter. Instead of using a contiguous 3x3 filter, a dilated 3x3 filter "skips" certain input pixels, effectively increasing the receptive field without increasing the number of parameters or computational cost. It has 2 main advantages:
+  - **Larger receptive field**: It allows the model to capture wider contextual information with fewer parameters. For example, a dilated 3x3 convolution with a dilation factor of 2 can capture a receptive field equivalent to a 5x5 convolution but with fewer parameters.
+  - **Efficient for tasks like segmentation**: Dilated convolutions are especially useful in tasks like semantic segmentation, where it's important to capture long-range dependencies in the image without losing resolution.
 
 ### Demo
 Below we show a demo of how convolution happens. On the right, we have an input of size 32*32*3 for a RGB image and the first convolution layer. With a filter size of 5*5*3, the resulting activation map is of dimension 28*28*1. If we use 5 filters in total, then the resulting volume will be size of 28*28*5, where each filter’s activation maps are stacked together as shown on the far right. Note that each neuron in the convolutional layer is connected to a local spatial region of the input volume, but spans the entire depth (i.e., all color channels). In this example, there are 5 neurons along the depth dimension, each looking at the same region of the input. The lines connecting these 5 neurons do not indicate shared weights; instead, they show that the neurons are focused on the same receptive field. Although these neurons are looking at the same region, each is associated with a different filter, meaning they do not share weights. On the left, we provide a short example of calculation of the output volume. (The dimension of filters are only for demonstration purpose. They do not scale to the accurate size.)
 ![Conv](conv.png)
+
+[Here](https://cs231n.github.io/convolutional-networks/) is also a great resource to see how convolution happens actively!
 
 ### Pooling Layer
 
@@ -79,9 +105,26 @@ Pooling operates independently on every depth slice of the input. The operation 
 In the following example, we can see how a depth slice is downsampled from size 4*4 to a size of 2*2 by max pooling. Notice how only spatial dimension is reduced (256*256 -> 128*128) while the depth is maintained (64 -> 64). 
 ![Pooling](pooling.png)
 
+### Pooling Layer Computation
+
+- **Input Volume:** Dimensions **$W_1 × H_1 × D_1$**
+
+- **Required Hyperparameters:**
+  - **$F$** – Filter size (spatial extent)  
+  - **$S$** – Stride
+
+- **Output Volume:** Dimensions **W₂ × H₂ × D₂**, computed as:
+  - $W_2 = \frac{W_1 - F}{S} + 1$  
+  - $H_2 = \frac{H_1 - F}{S} + 1$  
+  - $D_2 = D_1$
+
+- **Parameters:**  
+  - This layer introduces **no learnable parameters**, as it performs a fixed operation (e.g., max or average) on each region of the input.
+
+
 ### Normalization Layer (often BatchNorm)
 
-Helps stabilize training by normalizing activations across mini-batches.
+Batch Normalization (Batch Norm) [8] is a technique used in Convolutional Neural Networks (CNNs) to normalize the activations of each layer by adjusting and scaling them. It works by computing the mean and variance of the activations for each mini-batch and then normalizing them. The normalized values are then scaled and shifted using learnable parameters. Batch Norm helps stabilize training by reducing internal covariate shift, where the distribution of activations changes during training, making the network more stable and accelerating convergence. It also improves generalization by introducing a slight noise, acting as a form of regularization and reducing overfitting. 
 
 ### ReLU Layer (Activation Function)
 
@@ -232,13 +275,25 @@ $$ \frac{\partial L}{\partial X_{p,q}} =
 
 ## Transfer Learning & Fine-Tuning
 
-- **Transfer Learning**: Use a pretrained CNN as a feature extractor.
-- **Fine-Tuning**: Continue training the pretrained model on your specific dataset.
+In practice, training a Convolutional Network (ConvNet) from scratch with random initialization is uncommon due to the need for a large dataset. Instead, ConvNets are typically pretrained on large datasets, like ImageNet (which contains 1.2 million images with 1000 categories), and then used either as initialization or as a fixed feature extractor for the task at hand. There are three major Transfer Learning scenarios:
+
+- **ConvNet as a Fixed Feature Extractor**: A ConvNet pretrained on ImageNet can be used as a fixed feature extractor by removing the last fully connected layer (which is specific to the ImageNet task). The rest of the ConvNet processes the new dataset, producing a fixed-length vector of activations (e.g., a 4096-D vector from AlexNet). They are then input into a linear classifier for the new dataset. 
+
+- **Fine-tuning the ConvNet**: In this strategy, the classifier is replaced and retrained on the new dataset, and the weights of the pretrained ConvNet are fine-tuned through backpropagation. Fine-tuning can be done for the entire network or just the higher-level layers, as early layers typically capture more generic features (e.g., edges or color blobs), while later layers become specific to the original dataset (e.g., differentiating between dog breeds in ImageNet [12]).
+
+- **Pretrained Models**: Since training ConvNets can take weeks, pretrained ConvNet checkpoints are commonly shared. Using these off-the-shelf pretrained CNNs as a starting point for your own task can save a tons of resources and computes. Plus, you can take advantage of the already learned features in these pretrained models to better perform at your own downstream task. 
 
 ## Applications
+In the next chapter, we will see how CNNs are applied to different tasks in modern day deep learning. But right now, we will give you a taste of how powerful CNNs was and continue to be, even in the era of foundation models! 
+- **Image Classification**: CNNs are widely used for classifying images into predefined categories by learning hierarchical features. The network learns to recognize patterns at different levels, from edges to more complex shapes.
+  - **AlexNet (2012)**: A groundbreaking CNN that won the ImageNet [12] Large Scale Visual Recognition Challenge (ILSVRC) in 2012, significantly outperforming traditional methods and popularizing deep learning in computer vision.
+  - **EfficientNet (2019)**: EfficientNet [10] is a state-of-the-art CNN architecture that balances accuracy and efficiency by using a compound scaling method to scale width, depth, and resolution. It outperforms previous models like ResNet and Inception in terms of accuracy and computational efficiency on the ImageNet dataset. EfficientNet is widely used for image classification tasks due to its high performance with fewer parameters.
+- **Object Detection**: 
+  - **YOLO (You Only Look Once)**: YOLO [9] is a real-time object detection system that treats detection as a single regression problem, predicting both bounding boxes and class probabilities in one forward pass, making it faster and more efficient.
+  - **EfficientDet (2020)**: EfficientDet [11] is a state-of-the-art object detection model developed by Google AI, which focuses on achieving high performance while being computationally efficient. It leverages the EfficientNet backbone and a compound scaling method to balance accuracy and efficiency. EfficientDet provides a scalable solution for object detection tasks, with better accuracy and fewer parameters compared to other models like Faster R-CNN, making it ideal for real-time applications in industries such as robotics and mobile devices.
 
-- **Image Classification**
-- **Object Detection**
+## Acknowledgements
+We took a lot of inspirations from [Stanford CS231n: Deep Learning for Computer Vision](https://cs231n.stanford.edu/schedule.html) as well as [Dive into Deep Learning](https://d2l.ai/chapter_convolutional-neural-networks/index.html) to complete this note and we encourage you to read further on these 2 great resources to learn more about other things that's not covered in this note.
 
 ## References
 
@@ -248,3 +303,9 @@ $$ \frac{\partial L}{\partial X_{p,q}} =
 4. [Lecun98 CNN paper (PDF)](http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf)  
 5. [Understanding CNNs](https://cs231n.github.io/understanding-cnn/)  
 6. [Transfer Learning Notes](https://cs231n.github.io/transfer-learning/)
+7. Yu, F., & Koltun, V. (2015). Multi-scale context aggregation by dilated convolutions. arXiv preprint [arXiv:1511.07122](https://arxiv.org/pdf/1511.07122).
+8. Ioffe, S., & Szegedy, C. (2015, June). Batch normalization: Accelerating deep network training by reducing internal covariate shift. In International conference on machine learning (pp. 448-456). pmlr.
+9. Redmon, J., Divvala, S., Girshick, R., & Farhadi, A. (2016). You only look once: Unified, real-time object detection. In Proceedings of the IEEE conference on computer vision and pattern recognition (pp. 779-788).
+10. Tan, M., & Le, Q. (2019, May). Efficientnet: Rethinking model scaling for convolutional neural networks. In International conference on machine learning (pp. 6105-6114). PMLR.
+11. Tan, M., Pang, R., & Le, Q. V. (2020). Efficientdet: Scalable and efficient object detection. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition (pp. 10781-10790).
+12. Deng, J., Dong, W., Socher, R., Li, L. J., Li, K., & Fei-Fei, L. (2009, June). Imagenet: A large-scale hierarchical image database. In 2009 IEEE conference on computer vision and pattern recognition (pp. 248-255). Ieee.
