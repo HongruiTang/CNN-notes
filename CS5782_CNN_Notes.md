@@ -248,7 +248,9 @@ $$\begin{aligned}
 
 This is equivalent as applying the convolution operation on the 180-degree rotated $F$ and $\frac{dL}{dO}$ with padding = 1.
 
-![Flipping the convolutional filter](cnn_backprop3.png)
+<div align="center">
+  <img src="cnn_backprop3.png" width="200px"/>
+</div>
 
 
 
