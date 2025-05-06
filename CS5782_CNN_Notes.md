@@ -6,7 +6,7 @@ Convolutional Neural Networks (CNNs) are a type of Neural Network that is primar
 
 As we have seen in the previous chapters, MLP consists of several fully connected layers, where each neuron in one layer is connected to every neuron in the previous layer. The input is passed through several nonlinear hidden layers, and the output could be numerical in a regression task or class probability in a classification task. 
 
-However, MLPs are not well-suited for processing high-dimensional structured data like images. For example, say we want to classify a set of cat and dog images of size 128 * 128, each of which has 3 color channels as they are RGB images. The first step is to flatten the image to a vector of dimension 49152 (128*128*3). Suppose the next hidden layer has 1000 neurons (not very large compared to 49152), the number of parameters for this single layer would be 49152 * 1000 = 49152000. This is only for one layer. Imagine building a neural network with multiple layers using higher resolution images, say 1024 * 1024, the number of parameters grows quickly! Training such neural networks on GPUs is difficult or even infeasible. 
+However, MLPs are not well-suited for processing high-dimensional structured data like images. For example, say we want to classify a set of cat and dog images of size $128\times128$, each of which has 3 color channels as they are RGB images. The first step is to flatten the image to a vector of dimension 49152 ($128\times128\times3$). Suppose the next hidden layer has 1000 neurons (not very large compared to 49152), the number of parameters for this single layer would be $49152 \times 1000 = 49152000$. This is only for one layer. Imagine building a neural network with multiple layers using higher resolution images, say $1024 \times 1024$, the number of parameters grows quickly! Training such neural networks on GPUs is difficult or even infeasible. 
 
 Additionally, MLP is not good at capturing spatial relations and is sensitive to translation variance. Intuitively, the position of a dog in an image should not affect the classification result, whether it’s a dog or a cat. However, since MLPs treat each input pixel as independent and fixed in position, even a small spatial shift results in significantly different input vectors. This shift can drastically affect the output, even though the images are semantically identical. 
 
@@ -37,12 +37,12 @@ The Conv layer is the core building block of CNNs and performs the majority of t
 
 #### Components:
 - **Kernel/Filter**: Filters are small spatially (in width and height), but extend through the full depth of the input volume. During the forward pass, the filter slides over the input data (convolution) and computes the dot product between the filter and the input at each position. The output is an activation map that represents the feature the filter detects (e.g., edges, colors, patterns).
-  - **Example**: A first-layer filter might have a size of 5x5x3 (5 pixels wide and tall, with 3 corresponding to the 3 color channels in a RGB image).
+  - **Example**: A first-layer filter might have a size of $5\times5\times3$ (5 pixels wide and tall, with 3 corresponding to the 3 color channels in a RGB image).
 
 - **Padding**: Padding ensures the output volume retains the same spatial dimensions as the input, especially when stride = 1. In the example shown below, the zero padding is simply adding rows and columns of zeros around the pixels to retain dimension. 
 ![Padding](padding.png)
 
-- **Stride**: The stride defines how much the filter moves at each step. Larger strides reduce the spatial dimensions of the output, potentially losing finer details. In Figure 2, it shows how a filter of size 3*3 slides through the input slice with a stride = 1.
+- **Stride**: The stride defines how much the filter moves at each step. Larger strides reduce the spatial dimensions of the output, potentially losing finer details. In Figure 2, it shows how a filter of size $3\times3$ slides through the input slice with a stride = 1.
   1. Stride=1: Filter moves by 1 pixel at a time, leading to larger output volumes.
   2. Stride=2: Filter moves by 2 pixels, producing smaller output volumes.
   ![Stride](stride.png)
@@ -90,7 +90,7 @@ There are some common types of convolutions that people use.
   - **Efficient for tasks like segmentation**: Dilated convolutions are especially useful in tasks like semantic segmentation, where it's important to capture long-range dependencies in the image without losing resolution.
 
 ### Demo
-Below we show a demo of how convolution happens. On the right, we have an input of size 32*32*3 for a RGB image and the first convolution layer. With a filter size of 5*5*3, the resulting activation map is of dimension 28*28*1. If we use 5 filters in total, then the resulting volume will be size of 28*28*5, where each filter’s activation maps are stacked together as shown on the far right. Note that each neuron in the convolutional layer is connected to a local spatial region of the input volume, but spans the entire depth (i.e., all color channels). In this example, there are 5 neurons along the depth dimension, each looking at the same region of the input. The lines connecting these 5 neurons do not indicate shared weights; instead, they show that the neurons are focused on the same receptive field. Although these neurons are looking at the same region, each is associated with a different filter, meaning they do not share weights. On the left, we provide a short example of calculation of the output volume. (The dimension of filters are only for demonstration purpose. They do not scale to the accurate size.)
+Below we show a demo of how convolution happens. On the right, we have an input of size $32\times32\times3$ for a RGB image and the first convolution layer. With a filter size of $5\times5\times3$, the resulting activation map is of dimension $28\times28\times1$. If we use 5 filters in total, then the resulting volume will be size of $28\times28\times5$, where each filter’s activation maps are stacked together as shown on the far right. Note that each neuron in the convolutional layer is connected to a local spatial region of the input volume, but spans the entire depth (i.e., all color channels). In this example, there are 5 neurons along the depth dimension, each looking at the same region of the input. The lines connecting these 5 neurons do not indicate shared weights; instead, they show that the neurons are focused on the same receptive field. Although these neurons are looking at the same region, each is associated with a different filter, meaning they do not share weights. On the left, we provide a short example of calculation of the output volume. (The dimension of filters are only for demonstration purpose. They do not scale to the accurate size.)
 ![Conv](conv.png)
 
 [Here](https://cs231n.github.io/convolutional-networks/) is also a great resource to see how convolution happens actively!
@@ -102,7 +102,7 @@ Pooling operates independently on every depth slice of the input. The operation 
 - Reduce the number of parameters and computation, which helps in faster processing and lower memory usage.
 - Control overfitting by downsampling, which forces the model to focus on more prominent features rather than overfitting to small details.
 
-In the following example, we can see how a depth slice is downsampled from size 4*4 to a size of 2*2 by max pooling. Notice how only spatial dimension is reduced (256*256 -> 128*128) while the depth is maintained (64 -> 64). 
+In the following example, we can see how a depth slice is downsampled from size $4\times4$ to a size of $2\times2$ by max pooling. Notice how only spatial dimension is reduced ($256\times256 \rightarrow 128\times128$) while the depth is maintained (64 $\rightarrow$ 64). 
 ![Pooling](pooling.png)
 
 ### Pooling Layer Computation
@@ -193,7 +193,7 @@ Therefore, we can compute the gradient w.r.t input $X$ as:
 $$ \frac{\partial L}{\partial X_{p,q}} = \sum_{(i,j)\;\text{s.t.}\; X_{p,q} \in \text{patch}_{i,j}} \frac{\partial O_{i,j}}{\partial F_{p,q}} \cdot F_{p - i,\, q - j} $$
 
 **Example**:
-Let’s go through an example with an input of size $3*3$, filter of size $2*2$, and with stride = 1 and padding = 0.
+Let’s go through an example with an input of size $3\times3$, filter of size $2\times2$, and with stride = 1 and padding = 0.
 
 Figure 1 shows the forward pass and each tile in the output shows the result of applying the filter at the specific position. In the backprop, we are given $\frac{dL}{dO}$ and we aim to find $\frac{dL}{dF}$ and $\frac{dL}{dX}$ as shown in Figure.
 
