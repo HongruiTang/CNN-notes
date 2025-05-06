@@ -270,6 +270,11 @@ $$ \frac{\partial L}{\partial X_{p,q}} =
 
 
 ## Visualizing What CNN Learns
+You might be wondering how people know that CNNs are actually learning what the researchers claim they are learning? Well, we do! There are some great ways to visualize what CNNs are actually learning inside that black box as listed below. Pretty cool, right? Even cooler is this [CNN Explainer](https://poloclub.github.io/cnn-explainer/) where you can toggle and visualize yourself by interacting with different layers inside CNNs! 
+
+- **Layer Activations**: The simplest method for visualizing a network’s behavior is to show the activations during the forward pass. This involves showing the output of each neuron after it processes the input image. Initially, activations may appear dense and unclear, but as training progresses, they become more focused and sparse, reflecting the network's learning of meaningful features. This helps us understand which parts of the image activate certain neurons and gives insight into what the network is "looking for." If many activations are zero, it could indicate issues like dead filters, often caused by problems such as too high a learning rate.
+- **Conv/ FC Filters**: Visualizing the weights of convolutional and FC layers is another effective method, especially for the first Conv layer. Since the first layer processes raw pixel data, its weights are easier to interpret. As training progresses, well-trained filters show smooth, coherent patterns, while noisy or erratic patterns might indicate insufficient training or overfitting due to low regularization strength.
+- **Retrieving Images that Maximal Activate a Neuron**: A more advanced visualization method involves using a large image dataset to track which images activate a specific neuron the most. By visualizing these images, you can gain insight into what the neuron is "looking for" in its receptive field. 
 
 
 
